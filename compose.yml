@@ -1,0 +1,11 @@
+services:
+  openspore-server:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - db_data:/data
+    restart: unless-stopped
+
+volumes:
+  db_data:

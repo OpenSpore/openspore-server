@@ -1,0 +1,46 @@
+name: Feature Request
+description: Предложить новую механику или эндпоинт
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Описывай конкретно — что именно нужно и зачем.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Область
+      options:
+        - Empire
+        - Galaxy
+        - Diplomacy
+        - Events / SSE
+        - Auth
+        - Infrastructure
+        - Mod (openspore-mod)
+        - Другое
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему решает
+      placeholder: Сейчас нельзя...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+      placeholder: |
+        Добавить эндпоинт POST /diplomacy/trade с телом { fromId, toId, resources }
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы которые рассматривал

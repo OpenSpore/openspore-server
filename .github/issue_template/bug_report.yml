@@ -1,0 +1,48 @@
+name: Bug Report
+description: Что-то сломалось
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Заполни форму ниже. Чем подробнее — тем быстрее починим.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Что сломалось
+      placeholder: Опиши проблему
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Как воспроизвести
+      placeholder: |
+        1. POST /empire/register с телом ...
+        2. GET /galaxy/empires
+        3. Получаю 500 вместо 200
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / стек трейс
+      render: shell
+
+  - type: input
+    id: bun-version
+    attributes:
+      label: Версия Bun
+      placeholder: bun --version
+    validations:
+      required: true
