@@ -9,13 +9,13 @@ bun install
 bun run src/index.ts
 ```
 
-Сервер запустится на `http://localhost:3000`.
+Сервер запустится на `http://localhost:8080` (или `PORT`).
 
 ### Переменные окружения
 
 | Переменная      | По умолчанию     | Описание                  |
 |-----------------|------------------|---------------------------|
-| `PORT`          | `3000`           | Порт сервера              |
+| `PORT`          | `8080`           | Порт сервера              |
 | `DATABASE_PATH` | `openspore.db`   | Путь к файлу SQLite       |
 
 ### Docker
@@ -180,6 +180,32 @@ Server-Sent Events стрим событий галактики. Ping кажды
 
 ---
 
+### Relay (WebSocket)
+
+#### `WS /relay`
+
+Лобби и relay для двух игроков (мод использует его, чтобы обменяться UDP endpoint'ами для
+hole punching или гонять кадры через сервер, если прямое P2P невозможно). Текстовые кадры — JSON:
+
+| Клиент → сервер | Ответ / эффект |
+|---|---|
+| `{"t":"host","name":"alice"}` | `{"t":"hosted","code":"AB12CD"}` |
+| `{"t":"join","code":"AB12CD","name":"bob"}` | `{"t":"joined","code","peer":{"name"}}`, хосту `{"t":"peer","name":"bob"}` |
+| `{"t":"endpoint","ip":"1.2.3.4","port":7777}` | второму пиру `{"t":"endpoint","from":"client","ip","port"}` |
+| `{"t":"relay","data":...}` | второму пиру `{"t":"relay","from":"host","data"}` |
+| бинарный кадр | пересылается второму пиру как есть |
+| `{"t":"leave"}` | `{"t":"left"}`, второму пиру `{"t":"peer_left","closed":bool}` |
+| `{"t":"ping"}` | `{"t":"pong"}` |
+
+Ошибки: `{"t":"error","code":"not_found"|"full"|"no_session"|"already_in_session"|"bad_message"}`.
+Сессия живёт, пока жив хост; выход хоста закрывает её.
+
+#### `GET /relay/stats`
+
+`{ "sessions": 1 }`
+
+---
+
 ## Структура проекта
 
 ```
@@ -191,15 +217,18 @@ src/
 │   ├── empire.ts      # /empire/*
 │   ├── galaxy.ts      # /galaxy/empires
 │   ├── diplomacy.ts   # /diplomacy/*
-│   └── events.ts      # /events/stream (SSE)
+│   ├── events.ts      # /events/stream (SSE)
+│   └── relay.ts       # WS /relay, GET /relay/stats
 ├── store/
 │   ├── empire.ts      # empireStore
-│   └── diplomacy.ts   # diplomacyStore
+│   ├── diplomacy.ts   # diplomacyStore
+│   └── relay.ts       # relayStore (in-memory lobby sessions)
 └── types/index.ts     # Empire, DiplomacyOffer, ...
 tests/
 ├── empire.test.ts
 ├── galaxy.test.ts
 ├── diplomacy.test.ts
 ├── auth.test.ts
-└── events.test.ts
+├── events.test.ts
+└── relay.test.ts
 ```
