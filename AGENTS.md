@@ -8,7 +8,9 @@ Bun + ElysiaJS REST API сервер для мультиплеера Spore Space
 
 Оригинальный Spore (2008, EA/Maxis) не имел настоящего мультиплеера — только shared content
 ("pollination"): существа других игроков появлялись в твоей галактике автоматически через
-сервер EA (pollinator.spore.com). Сервера EA отключены в 2013.
+сервер EA (pollinator.spore.com). Сервера EA по состоянию на 2026 всё ещё работают (Sporepedia
+доступна, проблемы только с логином у части Steam-аккаунтов); community-реализация —
+Rosalie241/SporeServer. Для нашего мультиплеера EA-логин не нужен вообще.
 
 Цель проекта — добавить настоящий shared world мультиплеер в Space Stage через два компонента:
 
@@ -37,9 +39,13 @@ Space Stage выбран первым потому что:
 - [x] SQLite персистентность (timestamp хранится как INTEGER ms)
 - [x] Bearer token аутентификация: токен выдаётся при регистрации, защищены heartbeat/offer/accept/reject
 - [x] Валидация уникальности: один playerId = одна empire (409 Conflict при дубле)
-- [x] 44 теста через bun:test, все зелёные
+- [x] 48 тестов через bun:test, все зелёные
 - [x] README с инструкцией по запуску и API документацией
 - [x] AGENTS.md документация
+- [x] Realtime lobby/relay: WebSocket `/relay` (host → код сессии, join по коду, обмен endpoint'ами
+      для UDP hole punching, relay JSON/binary кадров), `GET /relay/stats`, 4 теста
+- [x] `diplomacyRoutes` подключены в `src/index.ts` (раньше роуты существовали, но не монтировались)
+- [x] `PORT` из окружения (по умолчанию 8080)
 
 ## Что осталось сделать
 
@@ -47,10 +53,13 @@ Space Stage выбран первым потому что:
 
 - [ ] **Docker + deploy** — Dockerfile, docker-compose, деплой на VPS
 
-### Мод (openspore-mod, следующий репо)
+### Мод (openspore-mod)
 
-- [ ] Настройка окружения: Visual Studio 2022 + SporeModAPI (C++17, только MSVC)
-- [ ] Базовый мод: хук на загрузку Space Stage, HTTP клиент для регистрации empire
+- [x] Сетевое ядро (UDP P2P, reliable/unreliable каналы, NetId, frame-aware TransformState), 27 unit-тестов
+- [x] Replication: ghost-корабль второго игрока через `Simulator::SpawnUFO`, 5 режимов управления
+- [x] Lab DLL без ModAPI (mingw/MSVC) + ModAPI-мод (VS2022) — см. openspore-mod/README.md
+- [ ] C++ WebSocket-клиент к `/relay` (WinHTTP) для обмена endpoint'ами и relay-fallback
+- [ ] HTTP клиент для регистрации empire (`POST /empire/register`) из мода
 - [ ] Отображение империй других игроков в галактике
 - [ ] UI: список онлайн игроков
 - [ ] Дипломатия через in-game интерфейс
@@ -124,6 +133,12 @@ bun test --watch       # тесты в watch режиме
 ### Events (SSE)
 - `GET /events/stream` — SSE стрим событий
 
+### Relay (WebSocket)
+- `WS /relay` — лобби/relay для двух игроков: `{t:"host",name}` → `{t:"hosted",code}`;
+  `{t:"join",code,name}` → `{t:"joined",...}` + хосту `{t:"peer",name}`; `{t:"endpoint",ip,port}`,
+  `{t:"relay",data}` и бинарные кадры пересылаются второму пиру; `{t:"leave"}`; ошибки `{t:"error",code}`
+- `GET /relay/stats` — `{ sessions }`
+
 #### SSE события
 | Событие | Когда |
 |---|---|
@@ -191,7 +206,7 @@ CREATE TABLE IF NOT EXISTS diplomacy_offers (
 
 ## Test Coverage
 
-44 теста, 0 фейлов.
+48 тестов, 0 фейлов.
 
 | Файл | Тестов |
 |---|---|
@@ -200,3 +215,4 @@ CREATE TABLE IF NOT EXISTS diplomacy_offers (
 | diplomacy.test.ts | 11 |
 | auth.test.ts | 14 |
 | events.test.ts | 4 |
+| relay.test.ts | 4 |
